@@ -2,273 +2,218 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simulation coût / kg (Poulets)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mes Scénarios</title>
   <style>
-    :root { --bg:#fff; --fg:#111; --muted:#6b7280; --line:#e5e7eb; --brand:#2563eb; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg); }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: clamp(22px, 3vw, 28px); margin: 0 0 4px; }
-    .muted { color: var(--muted); font-size: 14px; }
-    .grid { display: grid; gap: 16px; }
-    @media (min-width: 900px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
-    .card { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: #fff; }
-    label { font-size:14px; }
-    input, select, button { font: inherit; }
-    input, select { width: 100%; padding: 10px 12px; border:1px solid var(--line); border-radius: 10px; }
-    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: center; }
-    .row > :first-child { font-size:14px; }
-    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 8px; }
-    .btn { padding: 10px 14px; border-radius: 10px; border:1px solid var(--line); background:#fff; cursor:pointer; }
-    .btn.primary { background: var(--brand); color:#fff; border-color: var(--brand); }
-    .pill { background:#eff6ff; border:1px solid var(--line); border-radius:12px; padding:12px; }
-    .pill h3 { margin:0 0 4px; font-size:14px; color:var(--muted); }
-    .pill .big { font-size: 22px; font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 10px 8px; border-top:1px solid var(--line); text-align: left; font-size: 14px; }
-    thead th { background:#f9fafb; }
-    .right { text-align:right; }
-    .small { font-size:12px; color:var(--muted); }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; max-width: 900px }
+    h1 { margin-bottom: 8px }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center }
+    input, textarea, button { font: inherit }
+    input[type="text"] { width: 320px; padding: 8px }
+    textarea { width: 100%; min-height: 140px; padding: 10px; resize: vertical }
+    button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; background: #fff }
+    button.primary { background: #0ea5e9; border-color: #0ea5e9; color: #fff }
+    button.danger  { background: #ef4444; border-color: #ef4444; color: #fff }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin: 14px 0 }
+    .list { display: grid; gap: 12px }
+    .meta { font-size: 12px; color: #6b7280 }
+    .toolbar { display:flex; gap:8px; flex-wrap: wrap; align-items:center; margin: 8px 0 16px }
+    .spacer { flex: 1 }
+    .muted { color:#6b7280 }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Application de simulation – Coût / kg (Poulets)</h1>
-      <div class="muted">Saisissez les paramètres de base. Les résultats se mettent à jour automatiquement.</div>
-    </header>
+  <h1>📚 Mes Scénarios</h1>
+  <p class="muted">Tout est enregistré automatiquement dans ton navigateur (localStorage).</p>
 
-    <section class="grid grid-2" style="margin-top:16px">
-      <!-- Entrées -->
-      <div class="card">
-        <h2 style="margin:0 0 12px; font-size:18px;">Paramètres d'entrée</h2>
-        <div class="grid" id="inputs">
-          <div class="row">
-            <label>Libellé du scénario</label>
-            <input id="label" placeholder="Ex: Base, Promo, Nouveau lot..." value="Base">
-          </div>
-          <div class="row">
-            <label>Devise</label>
-            <select id="currency">
-              <option value="PLN" selected>PLN (zł)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="MAD">MAD (د.م)</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>Nombre de poulets</label>
-            <input id="chickens" type="number" min="0" step="1" value="18000">
-          </div>
-          <div class="row">
-            <label>Poids par poulet <span class="small">(kg)</span></label>
-            <input id="weightPerChicken" type="number" min="0" step="0.01" value="2.7">
-          </div>
-          <div class="row">
-            <label>Prix d'achat / kg (<span id="cur1">PLN</span>)</label>
-            <input id="purchasePricePerKg" type="number" min="0" step="0.01" value="6.4">
-          </div>
-          <div class="row">
-            <label>Poids brut utilisé <span class="small">(kg)</span></label>
-            <input id="grossWeightUsed" type="number" min="0" step="1" value="35964">
-          </div>
-          <div class="row">
-            <label>Frais de transport / kg (<span id="cur2">PLN</span>)</label>
-            <input id="transportPerKg" type="number" min="0" step="0.01" value="0.2">
-          </div>
-          <div class="row">
-            <label>Frais de prestation / kg (<span id="cur3">PLN</span>)</label>
-            <input id="servicePerKg" type="number" min="0" step="0.01" value="1.2">
-          </div>
-        </div>
-
-        <div class="btns">
-          <button class="btn primary" id="save">Enregistrer le scénario</button>
-          <button class="btn" id="clear">Effacer la liste</button>
-          <button class="btn" id="export">Export CSV</button>
-        </div>
-      </div>
-
-      <!-- Résultats -->
-      <div class="card">
-        <h2 style="margin:0 0 12px; font-size:18px;">Résultats instantanés</h2>
-        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
-          <div class="pill">
-            <h3>Poids total (kg)</h3>
-            <div class="big" id="weightTotal">0</div>
-          </div>
-          <div class="pill">
-            <h3>Prix d'achat total (<span id="cur4">PLN</span>)</h3>
-            <div class="big" id="purchaseTotal">0</div>
-          </div>
-          <div class="pill">
-            <h3>Coût MP / kg (<span id="cur5">PLN</span>)</h3>
-            <div class="big" id="mpPerKg">0</div>
-          </div>
-          <div class="pill">
-            <h3>Coût total / kg (<span id="cur6">PLN</span>)</h3>
-            <div class="big" id="totalPerKg">0</div>
-          </div>
-        </div>
-        <p class="small" style="margin-top:8px">
-          Le coût MP / kg utilise le <b>Poids brut utilisé</b> (rendement réel) comme dénominateur.
-        </p>
-      </div>
-    </section>
-
-    <!-- Scénarios -->
-    <section class="card" style="margin-top:16px">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h2 style="margin:0; font-size:18px;">Scénarios enregistrés</h2>
-        <div class="small">Cliquez « Enregistrer le scénario » pour ajouter la configuration actuelle.</div>
-      </div>
-      <div class="table-wrap" style="overflow:auto;">
-        <table id="table">
-          <thead>
-            <tr>
-              <th>Label</th>
-              <th>Devise</th>
-              <th>Nb poulets</th>
-              <th>Poids/poulet (kg)</th>
-              <th>Poids total (kg)</th>
-              <th class="right">Prix achat/kg</th>
-              <th class="right">Prix achat total</th>
-              <th class="right">Poids brut utilisé (kg)</th>
-              <th class="right">Transport/kg</th>
-              <th class="right">Prestation/kg</th>
-              <th class="right">Coût MP/kg</th>
-              <th class="right">Coût total/kg</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <p class="small" style="margin-top:8px">
-      Astuce : gardez PLN (zł) par défaut si vous achetez en Pologne. Les unités « kg » sont déjà intégrées partout.
-    </p>
+  <div class="card">
+    <div class="row">
+      <input id="title" type="text" placeholder="Titre du scénario (ex : Scène 1)" />
+      <button id="saveBtn" class="primary">💾 Enregistrer</button>
+      <button id="newBtn">🆕 Nouveau</button>
+    </div>
+    <textarea id="content" placeholder="Décris ton scénario ici..."></textarea>
+    <div class="meta" id="status">Brouillon non enregistré</div>
   </div>
 
-  <script>
-    // Helpers
-    const clamp = (v, m=0) => isFinite(v) ? Math.max(v, m) : 0;
-    const toN = (v) => {
-      const x = parseFloat(String(v || '').replace(',', '.'));
-      return isFinite(x) ? x : 0;
-    };
-    const fmt = (n, d=2) => (new Intl.NumberFormat(undefined, {minimumFractionDigits:d, maximumFractionDigits:d})).format(isFinite(n)?n:0);
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="Rechercher un titre/texte…" />
+    <div class="spacer"></div>
+    <button id="exportBtn">⬇️ Exporter (JSON)</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none" />
+    <button id="importBtn">⬆️ Importer</button>
+    <button id="clearAllBtn" class="danger">🗑️ Tout effacer</button>
+  </div>
 
-    // Elements
-    const el = (id) => document.getElementById(id);
-    const inputs = {
-      label: el('label'),
-      currency: el('currency'),
-      chickens: el('chickens'),
-      weightPerChicken: el('weightPerChicken'),
-      purchasePricePerKg: el('purchasePricePerKg'),
-      grossWeightUsed: el('grossWeightUsed'),
-      transportPerKg: el('transportPerKg'),
-      servicePerKg: el('servicePerKg'),
-    };
-    const results = {
-      weightTotal: el('weightTotal'),
-      purchaseTotal: el('purchaseTotal'),
-      mpPerKg: el('mpPerKg'),
-      totalPerKg: el('totalPerKg'),
-    };
-    const curEls = ['cur1','cur2','cur3','cur4','cur5','cur6'].map(el);
+  <div class="list" id="list"></div>
 
-    function compute() {
-      const chickens = clamp(toN(inputs.chickens.value), 0);
-      const wpc = clamp(toN(inputs.weightPerChicken.value), 0);
-      const priceKg = clamp(toN(inputs.purchasePricePerKg.value), 0);
-      const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
-      const trans = clamp(toN(inputs.transportPerKg.value), 0);
-      const serv = clamp(toN(inputs.servicePerKg.value), 0);
+<script>
+(() => {
+  const KEY = 'scenarios_v1';
+  const DRAFT_KEY = 'scenarios_draft_v1';
+  /** @type {{id:string,title:string,content:string,updated:number}[]} */
+  let scenarios = load(KEY, []);
+  let currentId = null; // id du scénario en cours d’édition
 
-      const weightTotal = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg = clamp(mpPerKg + trans + serv, 0);
+  // Helpers
+  function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+  function load(k, fallback){ try{ return JSON.parse(localStorage.getItem(k)) ?? fallback }catch{ return fallback } }
+  function now(){ return new Date().toISOString(); }
+  function fmt(t){ const d = new Date(t); return d.toLocaleString() }
+  function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36) }
 
-      results.weightTotal.textContent = fmt(weightTotal, 0);
-      results.purchaseTotal.textContent = fmt(purchaseTotal, 2);
-      results.mpPerKg.textContent = fmt(mpPerKg, 3);
-      results.totalPerKg.textContent = fmt(totalPerKg, 3);
-    }
+  // UI elements
+  const titleEl   = document.getElementById('title');
+  const contentEl = document.getElementById('content');
+  const statusEl  = document.getElementById('status');
+  const listEl    = document.getElementById('list');
+  const searchEl  = document.getElementById('search');
 
-    // Update currency labels (PLN/EUR/MAD)
-    function updateCurrencyLabels() {
-      const cur = inputs.currency.value || 'PLN';
-      curEls.forEach(span => span.textContent = cur);
-      compute();
-    }
-
-    // Init events
-    Object.values(inputs).forEach(i => i.addEventListener('input', compute));
-    inputs.currency.addEventListener('change', updateCurrencyLabels);
-
-    // Buttons
-    const tbody = document.querySelector('#table tbody');
-    document.getElementById('save').addEventListener('click', () => {
-      const row = document.createElement('tr');
-      const cur = inputs.currency.value;
-      const chickens = clamp(toN(inputs.chickens.value), 0);
-      const wpc = clamp(toN(inputs.weightPerChicken.value), 0);
-      const priceKg = clamp(toN(inputs.purchasePricePerKg.value), 0);
-      const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
-      const trans = clamp(toN(inputs.transportPerKg.value), 0);
-      const serv = clamp(toN(inputs.servicePerKg.value), 0);
-
-      const weightTotal = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg = clamp(mpPerKg + trans + serv, 0);
-
-      const cells = [
-        inputs.label.value || 'Scénario',
-        cur,
-        chickens.toFixed(0),
-        wpc.toFixed(2),
-        weightTotal.toFixed(0),
-        priceKg.toFixed(2),
-        purchaseTotal.toFixed(2),
-        gross.toFixed(0),
-        trans.toFixed(2),
-        serv.toFixed(2),
-        mpPerKg.toFixed(3),
-        totalPerKg.toFixed(3),
-      ];
-      cells.forEach((c, idx) => {
-        const td = document.createElement('td');
-        td.textContent = c;
-        if (idx >= 5) td.className = 'right';
-        row.appendChild(td);
+  // Rendu de la liste
+  function renderList() {
+    const q = searchEl.value.toLowerCase();
+    listEl.innerHTML = '';
+    scenarios
+      .slice() // copie
+      .sort((a,b)=>b.updated - a.updated) // plus récents en premier
+      .filter(s => s.title.toLowerCase().includes(q) || s.content.toLowerCase().includes(q))
+      .forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="row" style="justify-content:space-between">
+            <strong>${escapeHtml(s.title || '(Sans titre)')}</strong>
+            <span class="meta">Modifié: ${fmt(s.updated)}</span>
+          </div>
+          <p class="muted" style="white-space:pre-line; margin-top:8px">${escapeHtml(snippet(s.content))}</p>
+          <div class="row" style="margin-top:8px">
+            <button data-action="edit" data-id="${s.id}">✏️ Modifier</button>
+            <button data-action="duplicate" data-id="${s.id}">📄 Dupliquer</button>
+            <button data-action="delete" data-id="${s.id}" class="danger">🗑️ Supprimer</button>
+          </div>
+        `;
+        listEl.appendChild(div);
       });
-      tbody.prepend(row);
-    });
+  }
 
-    document.getElementById('clear').addEventListener('click', () => {
-      tbody.innerHTML = '';
-    });
+  function escapeHtml(str=''){ return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) }
+  function snippet(str='', n=180){ return str.length>n ? str.slice(0,n) + '…' : str }
 
-    document.getElementById('export').addEventListener('click', () => {
-      const header = ['Label','Devise','Nb poulets','Poids/poulet (kg)','Poids total (kg)','Prix achat/kg','Prix achat total','Poids brut utilisé (kg)','Transport/kg','Prestation/kg','Coût MP/kg','Coût total/kg'];
-      const rows = [header.join(',')];
-      [...tbody.querySelectorAll('tr')].forEach(tr => {
-        rows.push([...tr.children].map(td => td.textContent.replace(/,/g,'.')).join(','));
-      });
-      const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'simulations_poulets.csv'; a.click();
-      URL.revokeObjectURL(url);
-    });
+  // Charger un scénario dans l’éditeur
+  function loadIntoEditor(s){
+    currentId = s?.id ?? null;
+    titleEl.value = s?.title ?? '';
+    contentEl.value = s?.content ?? '';
+    statusEl.textContent = currentId ? `Édite: ${s.title || '(Sans titre)'} — Dernière modif: ${fmt(s.updated)}` : 'Brouillon non enregistré';
+  }
 
-    // First paint
-    updateCurrencyLabels();
-    compute();
-  </script>
+  // Nouveau brouillon
+  document.getElementById('newBtn').onclick = () => loadIntoEditor(null);
+
+  // Enregistrer
+  document.getElementById('saveBtn').onclick = () => {
+    const title = titleEl.value.trim();
+    const content = contentEl.value.trim();
+    if (!title && !content) { alert('Rien à enregistrer 😅'); return; }
+
+    if (currentId) {
+      const idx = scenarios.findIndex(s => s.id === currentId);
+      if (idx !== -1) {
+        scenarios[idx] = { ...scenarios[idx], title, content, updated: Date.now() };
+      }
+    } else {
+      scenarios.push({ id: uid(), title, content, updated: Date.now() });
+    }
+    save(KEY, scenarios);
+    localStorage.removeItem(DRAFT_KEY);
+    loadIntoEditor(null);
+    renderList();
+  };
+
+  // Actions de la liste
+  listEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    const s = scenarios.find(x => x.id === id);
+    if (!s) return;
+
+    if (action === 'edit') {
+      loadIntoEditor(s);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (action === 'delete') {
+      if (confirm('Supprimer ce scénario ?')) {
+        scenarios = scenarios.filter(x => x.id !== id);
+        save(KEY, scenarios);
+        if (currentId === id) loadIntoEditor(null);
+        renderList();
+      }
+    } else if (action === 'duplicate') {
+      scenarios.push({ id: uid(), title: s.title + ' (copie)', content: s.content, updated: Date.now() });
+      save(KEY, scenarios); renderList();
+    }
+  });
+
+  // Recherche
+  searchEl.addEventListener('input', renderList);
+
+  // Auto-brouillon local toutes les 800 ms
+  let draftTimer;
+  function scheduleDraftSave(){
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(()=>{
+      const draft = { title: titleEl.value, content: contentEl.value, when: now() };
+      save(DRAFT_KEY, draft);
+      statusEl.textContent = `Brouillon enregistré localement (${new Date().toLocaleTimeString()})`;
+    }, 800);
+  }
+  titleEl.addEventListener('input', scheduleDraftSave);
+  contentEl.addEventListener('input', scheduleDraftSave);
+
+  // Restaurer un brouillon si présent
+  (function restoreDraft(){
+    const d = load(DRAFT_KEY, null);
+    if (d && (!titleEl.value && !contentEl.value)) {
+      titleEl.value = d.title || '';
+      contentEl.value = d.content || '';
+      statusEl.textContent = `Brouillon restauré (${fmt(d.when)})`;
+    }
+  })();
+
+  // Export / Import / Tout effacer
+  document.getElementById('exportBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify(scenarios, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'scenarios_backup.json' });
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  };
+
+  document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+  document.getElementById('importFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const text = await file.text();
+    try {
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error('format invalide');
+      scenarios = data.map(x => ({ id: x.id || uid(), title: x.title || '', content: x.content || '', updated: x.updated || Date.now() }));
+      save(KEY, scenarios); renderList();
+      alert('Import terminé ✔️');
+    } catch(err) {
+      alert('Fichier invalide : ' + err.message);
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  document.getElementById('clearAllBtn').onclick = () => {
+    if (confirm('Supprimer TOUS les scénarios ? (irréversible)')) {
+      scenarios = []; save(KEY, scenarios); renderList(); loadIntoEditor(null);
+    }
+  };
+
+  // Démarrage
+  renderList();
+})();
+</script>
 </body>
 </html>
