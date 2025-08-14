@@ -49,11 +49,10 @@
             <input id="label" placeholder="Ex: Base, Promo, Nouveau lot..." value="Base">
           </div>
           <div class="row">
-            <label>Devise</label>
+            <label>Devise <span class="small">(1 EUR = 4,274347 PLN)</span></label>
             <select id="currency">
               <option value="PLN" selected>PLN (zł)</option>
               <option value="EUR">EUR (€)</option>
-              <option value="MAD">MAD (د.م)</option>
             </select>
           </div>
           <div class="row">
@@ -146,11 +145,15 @@
     </section>
 
     <p class="small" style="margin-top:8px">
-      Astuce : gardez PLN (zł) par défaut si vous achetez en Pologne. Les unités « kg » sont déjà intégrées partout.
+      Astuce : gardez PLN (zł) par défaut si vous achetez en Pologne. Sélectionnez EUR pour afficher tous les montants convertis au taux fixe 1 EUR = 4,274347 PLN.
     </p>
   </div>
 
   <script>
+    // === Taux de change fixe PLN -> EUR ===
+    // 1 EUR = 4.274347 PLN
+    const RATE_EUR = 4.274347;
+
     // Helpers
     const clamp = (v, m=0) => isFinite(v) ? Math.max(v, m) : 0;
     const toN = (v) => {
@@ -179,26 +182,43 @@
     };
     const curEls = ['cur1','cur2','cur3','cur4','cur5','cur6'].map(el);
 
+    // Conversion utilitaire: retourne la valeur convertie selon la devise sélectionnée
+    // On considère que toutes les entrées sont saisies en PLN.
+    function convertByCurrency(valuePLN) {
+      if (inputs.currency.value === 'EUR') {
+        return valuePLN / RATE_EUR;
+      }
+      return valuePLN; // PLN
+    }
+
     function compute() {
+      // Lire les entrées (en PLN pour les prix/frais)
       const chickens = clamp(toN(inputs.chickens.value), 0);
       const wpc = clamp(toN(inputs.weightPerChicken.value), 0);
-      const priceKg = clamp(toN(inputs.purchasePricePerKg.value), 0);
+      const priceKgPLN = clamp(toN(inputs.purchasePricePerKg.value), 0);
       const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
-      const trans = clamp(toN(inputs.transportPerKg.value), 0);
-      const serv = clamp(toN(inputs.servicePerKg.value), 0);
+      const transPLN = clamp(toN(inputs.transportPerKg.value), 0);
+      const servPLN = clamp(toN(inputs.servicePerKg.value), 0);
 
+      // Calculs "base" en PLN
       const weightTotal = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg = clamp(mpPerKg + trans + serv, 0);
+      const purchaseTotalPLN = clamp(weightTotal * priceKgPLN, 0);
+      const mpPerKgPLN = gross > 0 ? clamp(purchaseTotalPLN / gross, 0) : 0;
+      const totalPerKgPLN = clamp(mpPerKgPLN + transPLN + servPLN, 0);
 
+      // Conversion si EUR sélectionné
+      const purchaseTotal = convertByCurrency(purchaseTotalPLN);
+      const mpPerKg = convertByCurrency(mpPerKgPLN);
+      const totalPerKg = convertByCurrency(totalPerKgPLN);
+
+      // Affichages
       results.weightTotal.textContent = fmt(weightTotal, 0);
       results.purchaseTotal.textContent = fmt(purchaseTotal, 2);
       results.mpPerKg.textContent = fmt(mpPerKg, 3);
       results.totalPerKg.textContent = fmt(totalPerKg, 3);
     }
 
-    // Update currency labels (PLN/EUR/MAD)
+    // Update currency labels (PLN/EUR)
     function updateCurrencyLabels() {
       const cur = inputs.currency.value || 'PLN';
       curEls.forEach(span => span.textContent = cur);
@@ -209,22 +229,32 @@
     Object.values(inputs).forEach(i => i.addEventListener('input', compute));
     inputs.currency.addEventListener('change', updateCurrencyLabels);
 
-    // Buttons
+    // Boutons / Tableau
     const tbody = document.querySelector('#table tbody');
+
     document.getElementById('save').addEventListener('click', () => {
       const row = document.createElement('tr');
       const cur = inputs.currency.value;
+
       const chickens = clamp(toN(inputs.chickens.value), 0);
       const wpc = clamp(toN(inputs.weightPerChicken.value), 0);
-      const priceKg = clamp(toN(inputs.purchasePricePerKg.value), 0);
+      const priceKgPLN = clamp(toN(inputs.purchasePricePerKg.value), 0);
       const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
-      const trans = clamp(toN(inputs.transportPerKg.value), 0);
-      const serv = clamp(toN(inputs.servicePerKg.value), 0);
+      const transPLN = clamp(toN(inputs.transportPerKg.value), 0);
+      const servPLN = clamp(toN(inputs.servicePerKg.value), 0);
 
       const weightTotal = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg = clamp(mpPerKg + trans + serv, 0);
+      const purchaseTotalPLN = clamp(weightTotal * priceKgPLN, 0);
+      const mpPerKgPLN = gross > 0 ? clamp(purchaseTotalPLN / gross, 0) : 0;
+      const totalPerKgPLN = clamp(mpPerKgPLN + transPLN + servPLN, 0);
+
+      // Valeurs converties pour affichage/stockage selon la devise
+      const priceKgDisp = cur === 'EUR' ? priceKgPLN / RATE_EUR : priceKgPLN;
+      const transDisp   = cur === 'EUR' ? transPLN   / RATE_EUR : transPLN;
+      const servDisp    = cur === 'EUR' ? servPLN    / RATE_EUR : servPLN;
+      const purchaseTotalDisp = cur === 'EUR' ? purchaseTotalPLN / RATE_EUR : purchaseTotalPLN;
+      const mpPerKgDisp       = cur === 'EUR' ? mpPerKgPLN       / RATE_EUR : mpPerKgPLN;
+      const totalPerKgDisp    = cur === 'EUR' ? totalPerKgPLN    / RATE_EUR : totalPerKgPLN;
 
       const cells = [
         inputs.label.value || 'Scénario',
@@ -232,13 +262,13 @@
         chickens.toFixed(0),
         wpc.toFixed(2),
         weightTotal.toFixed(0),
-        priceKg.toFixed(2),
-        purchaseTotal.toFixed(2),
+        priceKgDisp.toFixed(2),
+        purchaseTotalDisp.toFixed(2),
         gross.toFixed(0),
-        trans.toFixed(2),
-        serv.toFixed(2),
-        mpPerKg.toFixed(3),
-        totalPerKg.toFixed(3),
+        transDisp.toFixed(2),
+        servDisp.toFixed(2),
+        mpPerKgDisp.toFixed(3),
+        totalPerKgDisp.toFixed(3),
       ];
       cells.forEach((c, idx) => {
         const td = document.createElement('td');
@@ -257,7 +287,7 @@
       const header = ['Label','Devise','Nb poulets','Poids/poulet (kg)','Poids total (kg)','Prix achat/kg','Prix achat total','Poids brut utilisé (kg)','Transport/kg','Prestation/kg','Coût MP/kg','Coût total/kg'];
       const rows = [header.join(',')];
       [...tbody.querySelectorAll('tr')].forEach(tr => {
-        rows.push([...tr.children].map(td => td.textContent.replace(/,/g,'.')).join(','));
+        rows.push([...tr.children].map(td => td.textContent.replace(/,/g,'.')).join(',')); // conserve la devise affichée
       });
       const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
