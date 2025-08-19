@@ -68,8 +68,8 @@
             <input id="purchasePricePerKg" type="number" min="0" step="0.01" value="6.4">
           </div>
           <div class="row">
-            <label>Poids brut utilisé <span class="small">(kg)</span></label>
-            <input id="grossWeightUsed" type="number" min="0" step="1" value="35964">
+            <label>Poids net (kg)</label>
+            <input id="grossWeightUsed" type="number" min="0" step="1" value="0" readonly>
           </div>
           <div class="row">
             <label>Frais de transport / kg (<span id="cur2">PLN</span>)</label>
@@ -93,7 +93,7 @@
         <h2 style="margin:0 0 12px; font-size:18px;">Résultats instantanés</h2>
         <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
           <div class="pill">
-            <h3>Poids total (kg)</h3>
+            <h3>Poids net total (kg)</h3>
             <div class="big" id="weightTotal">0</div>
           </div>
           <div class="pill">
@@ -110,7 +110,7 @@
           </div>
         </div>
         <p class="small" style="margin-top:8px">
-          Le coût MP / kg utilise le <b>Poids brut utilisé</b> (rendement réel) comme dénominateur.
+          Le coût MP / kg utilise le <b>Poids net</b> (rendement 74&nbsp;%) comme dénominateur.
         </p>
       </div>
     </section>
@@ -129,10 +129,10 @@
               <th>Devise</th>
               <th>Nb poulets</th>
               <th>Poids/poulet (kg)</th>
-              <th>Poids total (kg)</th>
+              <th>Poids vif total (kg)</th>
+              <th>Poids net (kg)</th>
               <th class="right">Prix achat/kg</th>
               <th class="right">Prix achat total</th>
-              <th class="right">Poids brut utilisé (kg)</th>
               <th class="right">Transport/kg</th>
               <th class="right">Prestation/kg</th>
               <th class="right">Coût MP/kg</th>
@@ -198,14 +198,18 @@
       const trans   = clamp(toN(inputs.transportPerKg.value), 0);     // devise courante
       const serv    = clamp(toN(inputs.servicePerKg.value), 0);       // devise courante
 
-      const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
+      const liveWeight = clamp(chickens * wpc, 0);
+      const netWeight  = clamp(liveWeight * 0.74, 0);
+      inputs.grossWeightUsed.value = fmt(netWeight, 0);
 
-      const weightTotal   = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg       = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg    = clamp(mpPerKg + trans + serv, 0);
+      const purchaseTotal  = clamp(liveWeight * priceKg, 0);
+      const serviceTotal   = clamp(liveWeight * serv, 0);
+      const transportTotal = clamp(netWeight * trans, 0);
 
-      results.weightTotal.textContent = fmt(weightTotal, 0);
+      const mpPerKg    = netWeight > 0 ? clamp(purchaseTotal / netWeight, 0) : 0;
+      const totalPerKg = netWeight > 0 ? clamp((purchaseTotal + serviceTotal + transportTotal) / netWeight, 0) : 0;
+
+      results.weightTotal.textContent = fmt(netWeight, 0);
       results.purchaseTotal.textContent = fmt(purchaseTotal, 2);
       results.mpPerKg.textContent = fmt(mpPerKg, 3);
       results.totalPerKg.textContent = fmt(totalPerKg, 3);
@@ -241,24 +245,26 @@
       const chickens = clamp(toN(inputs.chickens.value), 0);
       const wpc = clamp(toN(inputs.weightPerChicken.value), 0);
       const priceKg = clamp(toN(inputs.purchasePricePerKg.value), 0);
-      const gross = clamp(toN(inputs.grossWeightUsed.value), 0);
       const trans = clamp(toN(inputs.transportPerKg.value), 0);
       const serv = clamp(toN(inputs.servicePerKg.value), 0);
 
-      const weightTotal   = clamp(chickens * wpc, 0);
-      const purchaseTotal = clamp(weightTotal * priceKg, 0);
-      const mpPerKg       = gross > 0 ? clamp(purchaseTotal / gross, 0) : 0;
-      const totalPerKg    = clamp(mpPerKg + trans + serv, 0);
+      const liveWeight   = clamp(chickens * wpc, 0);
+      const netWeight    = clamp(liveWeight * 0.74, 0);
+      const purchaseTotal  = clamp(liveWeight * priceKg, 0);
+      const serviceTotal   = clamp(liveWeight * serv, 0);
+      const transportTotal = clamp(netWeight * trans, 0);
+      const mpPerKg    = netWeight > 0 ? clamp(purchaseTotal / netWeight, 0) : 0;
+      const totalPerKg = netWeight > 0 ? clamp((purchaseTotal + serviceTotal + transportTotal) / netWeight, 0) : 0;
 
       const cells = [
         inputs.label.value || 'Scénario',
         cur,
         chickens.toFixed(0),
         wpc.toFixed(2),
-        weightTotal.toFixed(0),
+        liveWeight.toFixed(0),
+        netWeight.toFixed(0),
         priceKg.toFixed(2),
         purchaseTotal.toFixed(2),
-        gross.toFixed(0),
         trans.toFixed(2),
         serv.toFixed(2),
         mpPerKg.toFixed(3),
@@ -267,7 +273,7 @@
       cells.forEach((c, idx) => {
         const td = document.createElement('td');
         td.textContent = c;
-        if (idx >= 5) td.className = 'right';
+        if (idx >= 6) td.className = 'right';
         row.appendChild(td);
       });
       tbody.prepend(row);
@@ -276,7 +282,7 @@
     document.getElementById('clear').addEventListener('click', () => { tbody.innerHTML = ''; });
 
     document.getElementById('export').addEventListener('click', () => {
-      const header = ['Label','Devise','Nb poulets','Poids/poulet (kg)','Poids total (kg)','Prix achat/kg','Prix achat total','Poids brut utilisé (kg)','Transport/kg','Prestation/kg','Coût MP/kg','Coût total/kg'];
+      const header = ['Label','Devise','Nb poulets','Poids/poulet (kg)','Poids vif total (kg)','Poids net (kg)','Prix achat/kg','Prix achat total','Transport/kg','Prestation/kg','Coût MP/kg','Coût total/kg'];
       const rows = [header.join(',')];
       [...tbody.querySelectorAll('tr')].forEach(tr => {
         rows.push([...tr.children].map(td => td.textContent.replace(/,/g,'.')).join(','));
